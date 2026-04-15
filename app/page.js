@@ -960,6 +960,10 @@ export default function Home() {
         /* Mejoras táctiles para iOS */
         button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         input, select { -webkit-tap-highlight-color: transparent; }
+        input[type="date"] { color-scheme: dark; min-height: 44px; }
+        input[type="date"]::-webkit-datetime-edit { padding: 0; }
+        input[type="date"]::-webkit-datetime-edit-fields-wrapper { padding: 0; }
+        input[type="date"]::-webkit-calendar-picker-indicator { margin-left: 4px; opacity: 0.6; }
       `}</style>
 
       {/* ── HEADER ── */}
@@ -1425,21 +1429,22 @@ export default function Home() {
                   <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>📈 Ventas por período</div>
 
                   {/* Selector de rango */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(148,163,184,0.7)', textTransform: 'uppercase', marginBottom: 5 }}>Desde</label>
+                  <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'flex-end' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(148,163,184,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Desde</label>
                       <input type="date" value={graficoDesde} onChange={e => setGraficoDesde(e.target.value)}
-                        style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 10, padding: '10px 11px', color: 'white', outline: 'none', fontSize: 14, fontFamily: 'inherit', minHeight: 44 }} />
+                        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 12, padding: '12px 10px', color: 'white', outline: 'none', fontSize: 13, fontFamily: 'inherit', minHeight: 48, colorScheme: 'dark', WebkitAppearance: 'none' }} />
                     </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(148,163,184,0.7)', textTransform: 'uppercase', marginBottom: 5 }}>Hasta</label>
+                    <div style={{ flexShrink: 0, paddingBottom: 12, color: 'rgba(148,163,184,0.4)', fontSize: 13, fontWeight: 700 }}>→</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(148,163,184,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Hasta</label>
                       <input type="date" value={graficoHasta} onChange={e => setGraficoHasta(e.target.value)}
-                        style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: 10, padding: '10px 11px', color: 'white', outline: 'none', fontSize: 14, fontFamily: 'inherit', minHeight: 44 }} />
+                        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 12, padding: '12px 10px', color: 'white', outline: 'none', fontSize: 13, fontFamily: 'inherit', minHeight: 48, colorScheme: 'dark', WebkitAppearance: 'none' }} />
                     </div>
                   </div>
 
-                  {/* Accesos rápidos — botones más grandes */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, marginBottom: 16 }}>
+                  {/* Accesos rápidos */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
                     {[
                       { label: 'Hoy', desde: hoy, hasta: hoy },
                       { label: '7d', desde: toYMD(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)), hasta: hoy },
@@ -1450,7 +1455,7 @@ export default function Home() {
                       return (
                         <button key={r.label} type="button"
                           onClick={() => { setGraficoDesde(r.desde); setGraficoHasta(r.hasta); }}
-                          style={{ background: activo ? 'rgba(56,189,248,0.18)' : 'rgba(255,255,255,0.06)', border: `1px solid ${activo ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`, borderRadius: 10, padding: '10px 4px', color: activo ? '#38bdf8' : 'rgba(148,163,184,0.8)', cursor: 'pointer', fontSize: 13, fontWeight: activo ? 800 : 600, fontFamily: 'inherit', minHeight: 44, textAlign: 'center' }}>
+                          style={{ background: activo ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.06)', border: `1.5px solid ${activo ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, padding: '11px 2px', color: activo ? '#38bdf8' : 'rgba(148,163,184,0.8)', cursor: 'pointer', fontSize: 13, fontWeight: activo ? 800 : 600, fontFamily: 'inherit', minHeight: 46, textAlign: 'center', transition: 'all 0.15s' }}>
                           {r.label}
                         </button>
                       );
@@ -1622,7 +1627,7 @@ export default function Home() {
                     <div>
                       <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(148,163,184,0.8)', textTransform: 'uppercase', marginBottom: 5 }}>Fecha exacta</label>
                       <input type="date" value={filtroFechaMov} onChange={(e) => setFiltroFechaMov(e.target.value)}
-                        style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 11px', color: 'white', outline: 'none', fontSize: 14, fontFamily: 'inherit', minHeight: 44 }} />
+                        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 11px', color: 'white', outline: 'none', fontSize: 14, fontFamily: 'inherit', minHeight: 44, colorScheme: 'dark' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'rgba(148,163,184,0.8)', textTransform: 'uppercase', marginBottom: 5 }}>Producto</label>
