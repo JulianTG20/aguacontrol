@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 const API_URL = "https://script.google.com/macros/s/AKfycbyGqQr5dIPVdGO06ZJbLyFSJNoIUefntdTVNNEHhdkoKeD89WaT2kPaF_0ysWbnUGtDxQ/exec";
 
@@ -188,6 +188,150 @@ function MetodoChip({ metodo }) {
     }}>
       {m.emoji} {m.label}
     </span>
+  );
+}
+
+/* ─── Autocomplete de clientes ───────────────────────────── */
+function AutocompleteCliente({ value, onChange, clientes }) {
+  const [open, setOpen]       = useState(false);
+  const [query, setQuery]     = useState(value || '');
+  const [activo, setActivo]   = useState(-1);
+  const inputRef              = useRef(null);
+  const listRef               = useRef(null);
+
+  // Sincronizar query con value externo (ej: reset del formulario)
+  useEffect(() => { setQuery(value || ''); }, [value]);
+
+  const filtrados = clientes.filter(c =>
+    c.NOMBRE && (!query.trim() || c.NOMBRE.toLowerCase().includes(query.toLowerCase().trim()))
+  ).slice(0, 20);
+
+  const seleccionar = (nombre) => {
+    setQuery(nombre);
+    onChange(nombre);
+    setOpen(false);
+    setActivo(-1);
+  };
+
+  const handleChange = (e) => {
+    const v = e.target.value;
+    setQuery(v);
+    onChange(v);
+    setOpen(true);
+    setActivo(-1);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!open) { if (e.key === 'ArrowDown' || e.key === 'Enter') setOpen(true); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActivo(a => Math.min(a + 1, filtrados.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActivo(a => Math.max(a - 1, -1)); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activo >= 0 && filtrados[activo]) seleccionar(filtrados[activo].NOMBRE);
+      else setOpen(false);
+    }
+    else if (e.key === 'Escape') { setOpen(false); setActivo(-1); }
+  };
+
+  // Scroll automático al item activo
+  useEffect(() => {
+    if (activo >= 0 && listRef.current) {
+      const item = listRef.current.children[activo];
+      if (item) item.scrollIntoView({ block: 'nearest' });
+    }
+  }, [activo]);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <input
+          ref={inputRef}
+          type="text"
+          autoComplete="off"
+          placeholder="Toca para ver clientes o escribe para filtrar..."
+          value={query}
+          onChange={handleChange}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 180)}
+          onKeyDown={handleKeyDown}
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: open ? '1.5px solid rgba(56,189,248,0.6)' : '1.5px solid rgba(255,255,255,0.1)',
+            borderRadius: 12, padding: '12px 40px 12px 14px',
+            color: 'white', width: '100%', outline: 'none',
+            fontSize: 15, fontFamily: 'inherit', transition: 'border-color 0.2s',
+            boxShadow: open ? '0 0 0 3px rgba(56,189,248,0.08)' : 'none',
+          }}
+        />
+        {/* Botón limpiar */}
+        {query && (
+          <button
+            type="button"
+            onMouseDown={(e) => { e.preventDefault(); seleccionar(''); setQuery(''); inputRef.current?.focus(); }}
+            style={{
+              position: 'absolute', right: 10, background: 'rgba(148,163,184,0.2)',
+              border: 'none', borderRadius: 6, width: 24, height: 24,
+              color: 'rgba(148,163,184,0.8)', cursor: 'pointer', fontSize: 13,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>✕</button>
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          ref={listRef}
+          style={{
+            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 200,
+            background: 'linear-gradient(180deg,#0d1f3c,#091829)',
+            border: '1px solid rgba(56,189,248,0.25)',
+            borderRadius: 14, maxHeight: 240, overflowY: 'auto',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+          }}>
+          {filtrados.length === 0 ? (
+            <div style={{ padding: '14px 16px', fontSize: 13, color: 'rgba(148,163,184,0.5)', textAlign: 'center' }}>
+              {query ? `Sin resultados para "${query}"` : 'No hay clientes guardados'}
+            </div>
+          ) : (
+            filtrados.map((c, i) => {
+              const isActive = i === activo;
+              return (
+                <div
+                  key={c.ID_CLIENTE || i}
+                  onMouseDown={(e) => { e.preventDefault(); seleccionar(c.NOMBRE); }}
+                  style={{
+                    padding: '11px 16px',
+                    cursor: 'pointer',
+                    background: isActive ? 'rgba(56,189,248,0.12)' : 'transparent',
+                    borderBottom: i < filtrados.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    transition: 'background 0.12s',
+                  }}
+                  onMouseEnter={() => setActivo(i)}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: isActive ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.06)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
+                  }}>👤</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: isActive ? '#38bdf8' : 'white' }}>
+                      {c.NOMBRE}
+                    </div>
+                    {(c.TELEFONO || c.DIRECCION) && (
+                      <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {c.TELEFONO && `📞 ${c.TELEFONO}`}{c.TELEFONO && c.DIRECCION && ' · '}{c.DIRECCION && `📍 ${c.DIRECCION}`}
+                      </div>
+                    )}
+                  </div>
+                  {isActive && <div style={{ fontSize: 11, color: '#38bdf8', flexShrink: 0 }}>↵</div>}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -917,13 +1061,11 @@ export default function Home() {
                     {/* Cliente */}
                     <div style={{ marginBottom: 18 }}>
                       <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(56,189,248,0.8)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>👤 Cliente</label>
-                      <input style={{ background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 14px', color: 'white', width: '100%', outline: 'none', fontSize: 15, fontFamily: 'inherit', transition: 'border-color 0.2s' }}
-                        type="text" list="lista-clientes" placeholder="Escribe el nombre del cliente..." value={venta.cliente}
-                        onChange={e => setVenta(v => ({ ...v, cliente: e.target.value }))}
-                        onFocus={e => e.target.style.borderColor = 'rgba(56,189,248,0.5)'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
-                      <datalist id="lista-clientes">
-                        {clientes.map((c, i) => c.NOMBRE && <option key={i} value={c.NOMBRE} />)}
-                      </datalist>
+                      <AutocompleteCliente
+                        value={venta.cliente}
+                        onChange={nombre => setVenta(v => ({ ...v, cliente: nombre }))}
+                        clientes={clientes}
+                      />
                     </div>
 
                     {/* Producto */}
